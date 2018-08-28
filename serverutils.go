@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var store = MapDataStore{mapStore: make(map[string][][]byte)}
+
 func handleConn(conn io.ReadWriter) {
 	// TODO: handle setting TID/port
 	// TODO: implement recover() here
@@ -34,24 +36,18 @@ func handleConn(conn io.ReadWriter) {
 	}
 }
 
-func sendError(conn io.Writer, code uint16, message string) {
-	p := PacketError{Code: code, Msg: message}
-	conn.Write(p.Serialize())
-}
-
 func handleRead(conn io.ReadWriter, p PacketRequest) {
-	// check that key exists
-	if !keyExists(p.Filename) {
+	if !store.keyExists(p.Filename) {
 		sendError(conn, 1, fmt.Sprintf("File %s not found", p.Filename))
 		return
 	}
-	sendData(conn, getData(p.Filename), time.Duration(time.Second*10))
+	sendData(conn, store.getData(p.Filename), time.Duration(time.Second*10))
 }
 
 func handleWrite(conn io.ReadWriter, p PacketRequest) {
 	timeout := 10 * time.Second
 	payload := receiveData(conn, timeout)
 	if payload != nil {
-		setData(p.Filename, payload)
+		store.setData(p.Filename, payload)
 	}
 }

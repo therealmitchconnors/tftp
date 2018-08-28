@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// functions in this file are likely to be of value to clients
+// as well as to the server, so they are kept separate.
+
 // the largest payload in one data message is 512 bytes
 const maxPayload int = 512
 
@@ -25,7 +28,7 @@ func sendData(conn io.ReadWriter, data [][]byte, timeout time.Duration) {
 		// Syndrome (https://en.wikipedia.org/wiki/Sorcerer%27s_Apprentice_Syndrome)
 		success := func(p Packet) bool {
 			v, ok := p.(*PacketAck)
-			return ok || v.BlockNum == blockNum
+			return ok && v.BlockNum == blockNum
 		}
 		_, err := sendAndWait(conn, &PacketData{BlockNum: blockNum, Data: block[:]},
 			timeout,
@@ -101,4 +104,9 @@ func sendAndWait(conn io.ReadWriter, toSend Packet, timeout time.Duration, succe
 			continue
 		}
 	}
+}
+
+func sendError(conn io.Writer, code uint16, message string) {
+	p := PacketError{Code: code, Msg: message}
+	conn.Write(p.Serialize())
 }
