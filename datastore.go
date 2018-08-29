@@ -1,4 +1,4 @@
-package tftp_test
+package tftp
 
 import "sync"
 
