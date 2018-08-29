@@ -1,8 +1,7 @@
 package tftp
 
 import (
-	"io"
-	"io/ioutil"
+	"net"
 	"time"
 )
 
@@ -12,7 +11,7 @@ import (
 // the largest payload in one data message is 512 bytes
 const maxPayload int = 512
 
-func sendData(conn io.ReadWriter, data [][]byte, timeout time.Duration) {
+func sendData(conn net.PacketConn, data [][]byte, timeout time.Duration, dest net.Addr) {
 	// by iterating with int (32 bits or greater), we can handle
 	// files up to at least 2^(31+9) bytes (1TB) in size, because
 	// the cast to uint16 for the block number will roll over.
@@ -32,7 +31,8 @@ func sendData(conn io.ReadWriter, data [][]byte, timeout time.Duration) {
 		}
 		_, err := sendAndWait(conn, &PacketData{BlockNum: blockNum, Data: block[:]},
 			timeout,
-			success)
+			success,
+			dest)
 		if err != nil {
 			// TODO: check that this is the right error handling mechanism
 			return
@@ -40,7 +40,7 @@ func sendData(conn io.ReadWriter, data [][]byte, timeout time.Duration) {
 	}
 }
 
-func receiveData(conn io.ReadWriter, timeout time.Duration) [][]byte {
+func receiveData(conn net.PacketConn, timeout time.Duration, dest net.Addr) [][]byte {
 	var dp *PacketData
 	ack := PacketAck{BlockNum: 0}
 	var payload = make([][]byte, 1)
@@ -50,7 +50,7 @@ func receiveData(conn io.ReadWriter, timeout time.Duration) [][]byte {
 			dataPacket, ok := p.(*PacketData)
 			return ok && dataPacket.BlockNum == ack.BlockNum+1
 		}
-		packet, err := sendAndWait(conn, &ack, timeout, success)
+		packet, err := sendAndWait(conn, &ack, timeout, success, dest)
 		if err != nil {
 			return nil
 		}
@@ -65,26 +65,27 @@ func receiveData(conn io.ReadWriter, timeout time.Duration) [][]byte {
 
 type SuccessCriteria func(Packet) bool
 
-func sendAndWait(conn io.ReadWriter, toSend Packet, timeout time.Duration, success SuccessCriteria) (responsePacket Packet, err error) {
+func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, success SuccessCriteria, dest net.Addr) (responsePacket Packet, err error) {
 	cerror := make(chan error)
 	cresult := make(chan Packet)
 	for {
-		conn.Write(toSend.Serialize())
+		conn.WriteTo(toSend.Serialize(), dest)
 		// TODO: Error handle here
 
 		go func() {
 			var received Packet
 			// until we have success, do this
 			for received == nil || !success(received) {
-				bytes, error := ioutil.ReadAll(conn)
+				bytes := make([]byte, 516)
+				n, _, error := conn.ReadFrom(bytes)
 				if error != nil {
-					sendError(conn, 0, error.Error())
+					sendError(conn, 0, error.Error(), dest)
 					cerror <- error
 					return
 				}
 				received, error = ParsePacket(bytes)
 				if error != nil {
-					sendError(conn, 0, error.Error())
+					sendError(conn, 0, error.Error(), dest)
 					cerror <- error
 					return
 				}
@@ -106,7 +107,7 @@ func sendAndWait(conn io.ReadWriter, toSend Packet, timeout time.Duration, succe
 	}
 }
 
-func sendError(conn io.Writer, code uint16, message string) {
+func sendError(conn net.PacketConn, code uint16, message string, dest net.Addr) {
 	p := PacketError{Code: code, Msg: message}
-	conn.Write(p.Serialize())
+	conn.WriteTo(p.Serialize(), dest)
 }
