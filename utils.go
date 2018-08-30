@@ -55,11 +55,13 @@ func receiveData(conn net.PacketConn, timeout time.Duration, dest net.Addr) [][]
 			return nil
 		}
 		// cast will always succeed, because we've already cast in success criteria
-		dp, _ := packet.(*PacketData)
+		dp, _ = packet.(*PacketData)
 
 		// put the bytes somewhere
 		payload = append(payload, dp.Data)
+		ack.BlockNum++
 	}
+	conn.WriteTo(ack.Serialize(), dest)
 	return payload
 }
 
@@ -76,8 +78,10 @@ func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, succ
 			var received Packet
 			// until we have success, do this
 			for received == nil || !success(received) {
-				bytes := make([]byte, 516)
+				bytes := make([]byte, 517)
 				n, _, error := conn.ReadFrom(bytes)
+				// trim any trailing bytes
+				bytes = bytes[:n]
 				if error != nil {
 					sendError(conn, 0, error.Error(), dest)
 					cerror <- error

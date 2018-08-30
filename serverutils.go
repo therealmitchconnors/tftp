@@ -15,7 +15,10 @@ func handleReq(buf []byte, addr net.UDPAddr) {
 	error := request.Parse(buf)
 
 	// negotiate new connection using TID
-	conn, error := net.DialUDP("udp", nil, &addr)
+	conn, error := net.ListenUDP("udp", nil)
+	// I don't love passing the client addr to every funciton,
+	// but it allows us to use only the PacketConn interface
+	// which is better
 	if error != nil {
 		sendError(conn, 0, error.Error(), &addr)
 	}
