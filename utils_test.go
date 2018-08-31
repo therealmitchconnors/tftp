@@ -177,14 +177,7 @@ func TestReceiveData(t *testing.T) {
 	}
 }
 
-// func TestSendRecv(t *testing.T) {
-// 	value := generateTestData(2, 2)
-// 	conn := NewPacketConn()
-// 	go sendData(&conn.Server, value, 10*time.Second, nil)
-// 	result := receiveData(&conn.Client, time.Second, nil)
-// 	for i, packet := range result {
-// 		if !bytes.Equal(packet, value[i]) {
-// 			t.Errorf("Packet number %d corrupt", i)
-// 		}
-// 	}
-// }
+// testBadSocketRead
+// testBadSocketWrite
+// testTimeOut
+// testTimeOutSocket // hard

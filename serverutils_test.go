@@ -1,6 +1,7 @@
 package tftp
 
 import (
+	"bytes"
 	"net"
 	"testing"
 	"time"
@@ -37,29 +38,25 @@ func setupTestInjections(conn net.PacketConn) (testUtils UtilDependencies, testS
 			countCall("handleRead", map[string]interface{}{"conn": conn, "p": p, "addr": addr})
 		},
 		handleWrite: func(conn net.PacketConn, p PacketRequest, addr net.Addr) {
-			countCall("handleRead", map[string]interface{}{"conn": conn, "p": p, "addr": addr})
+			countCall("handleWrite", map[string]interface{}{"conn": conn, "p": p, "addr": addr})
 		},
 	}
 	return
 }
 
-func TestHandleReq(t *testing.T) {
+func TestHandleReadReq(t *testing.T) {
 	testPacketConn := NewPacketConn()
 	_, testServerUtils, callCounter := setupTestInjections(&testPacketConn.Server)
 
 	fname := "foo.txt"
-	p := PacketRequest{Op: OpRRQ, Mode: "fhqwgads", Filename: fname}
+	p := PacketRequest{Op: OpRRQ, Mode: "octet", Filename: fname}
 
 	handleReqDep(p.Serialize(), net.UDPAddr{}, testServerUtils)
 
-	calls, ok := callCounter["sendError"]
-	if ok {
-		errMsg := calls[0]["message"].(string)
-		t.Errorf("Unexpected Error sent: %s", errMsg)
-	}
+	checkErrors(callCounter, t)
 
 	// handleRead should have been called once
-	calls, ok = callCounter["handleRead"]
+	calls, ok := callCounter["handleRead"]
 	if !ok || len(calls) < 1 {
 		t.Fatal("Read Request did not call handleRead()")
 	}
@@ -68,3 +65,85 @@ func TestHandleReq(t *testing.T) {
 		t.Errorf("Expected filename %s, but got %s", fname, reqPacket.Filename)
 	}
 }
+
+func checkErrors(callCounter map[string][]map[string]interface{}, t *testing.T) {
+	calls, ok := callCounter["sendError"]
+	if ok {
+		errMsg := calls[0]["message"].(string)
+		t.Errorf("Unexpected Error sent: %s", errMsg)
+	}
+}
+
+func TestHandleWriteReq(t *testing.T) {
+	testPacketConn := NewPacketConn()
+	_, testServerUtils, callCounter := setupTestInjections(&testPacketConn.Server)
+
+	fname := "foo.txt"
+	p := PacketRequest{Op: OpWRQ, Mode: "octet", Filename: fname}
+
+	handleReqDep(p.Serialize(), net.UDPAddr{}, testServerUtils)
+
+	checkErrors(callCounter, t)
+
+	// handleRead should have been called once
+	calls, ok := callCounter["handleWrite"]
+	if !ok || len(calls) < 1 {
+		t.Fatal("Read Request did not call handleWrite()")
+	}
+	reqPacket := calls[0]["p"].(PacketRequest)
+	if reqPacket.Filename != fname {
+		t.Errorf("Expected filename %s, but got %s", fname, reqPacket.Filename)
+	}
+}
+
+func TestHandleWrite(t *testing.T) {
+	testPacketConn := NewPacketConn()
+	testUtils, _, callCounter := setupTestInjections(&testPacketConn.Server)
+
+	p := PacketRequest{Op: OpWRQ, Mode: "octet", Filename: "fname"}
+	handleWrite(&testPacketConn.Server, p, &net.UDPAddr{}, testUtils)
+
+	checkErrors(callCounter, t)
+
+	if len(callCounter["receiveData"]) < 1 {
+		t.Error("handleWrite failed to call receiveData")
+	}
+
+	inputData := testUtils.receiveData(&testPacketConn.Server, time.Second, &net.UDPAddr{})
+
+	for i, v := range store.getData("fname") {
+		if !bytes.Equal(v, inputData[i]) {
+			t.Error("input data does not match stored data.")
+		}
+	}
+}
+
+func TestHandleRead(t *testing.T) {
+	testPacketConn := NewPacketConn()
+	testUtils, _, callCounter := setupTestInjections(&testPacketConn.Server)
+
+	fname := "readfile"
+	payload := []byte{42}
+	payload2d := [][]byte{payload}
+
+	store.setData(fname, payload2d)
+
+	p := PacketRequest{Op: OpRRQ, Mode: "octet", Filename: fname}
+	handleRead(&testPacketConn.Server, p, &net.UDPAddr{}, testUtils)
+
+	checkErrors(callCounter, t)
+
+	if len(callCounter["sendData"]) < 1 {
+		t.Error("handleRead failed to call sendData")
+	}
+
+	for i, v := range store.getData(fname) {
+		if !bytes.Equal(v, payload2d[i]) {
+			t.Error("input data does not match stored data.")
+		}
+	}
+}
+
+// testBadMode
+// testBadRead
+// noSuchKey
