@@ -144,6 +144,42 @@ func TestHandleRead(t *testing.T) {
 	}
 }
 
-// testBadMode
-// testBadRead
+func TestHandleReqBadMode(t *testing.T) {
+	testPacketConn := NewPacketConn()
+	_, testServerUtils, callCounter := setupTestInjections(&testPacketConn.Server)
+
+	fname := "foo.txt"
+	p := PacketRequest{Op: OpWRQ, Mode: "ascii", Filename: fname}
+
+	// We expect an error packet in response, as ascii mode is not supported
+	handleReqDep(p.Serialize(), net.UDPAddr{}, testServerUtils)
+
+	_, ok := callCounter["sendError"]
+	if !ok {
+		t.Errorf("Unsupported ASCII Mode Accepted by server")
+	}
+}
+
+func TestHandleReadMissingFile(t *testing.T) {
+
+	testPacketConn := NewPacketConn()
+	testUtils, _, callCounter := setupTestInjections(&testPacketConn.Server)
+
+	fname := "readfile"
+
+	// reset the store so tests don't bleed state here
+	// TODO: remove global state
+	store = MapDataStore{mapStore: make(map[string][][]byte)}
+	// this is just like testHandleRead, but we don't set the file first
+	// store.setData(fname, payload2d)
+
+	p := PacketRequest{Op: OpRRQ, Mode: "octet", Filename: fname}
+	handleRead(&testPacketConn.Server, p, &net.UDPAddr{}, testUtils)
+
+	_, ok := callCounter["sendError"]
+	if !ok {
+		t.Errorf("Read for non-existing file didn't result in error")
+	}
+}
+
 // noSuchKey
