@@ -80,13 +80,13 @@ func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, succ
 			for received == nil || !success(received) {
 				bytes := make([]byte, 517)
 				n, _, error := conn.ReadFrom(bytes)
-				// trim any trailing bytes
-				bytes = bytes[:n]
 				if error != nil {
 					sendError(conn, 0, error.Error(), dest)
 					cerror <- error
 					return
 				}
+				// trim any trailing bytes
+				bytes = bytes[:n]
 				received, error = ParsePacket(bytes)
 				if error != nil {
 					sendError(conn, 0, error.Error(), dest)
