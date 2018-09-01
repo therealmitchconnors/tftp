@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	"igneous.io/tftp"
+	"github.com/therealmitchconnors/tftp"
 )
 
 func main() {
