@@ -177,7 +177,136 @@ func TestReceiveData(t *testing.T) {
 	}
 }
 
-// testBadSocketRead
-// testBadSocketWrite
-// testTimeOut
+type FailOnReadConn struct{}
+
+func (e *FailOnReadConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
+	err = errors.New("Fake connection failure")
+	return
+}
+
+func (e *FailOnReadConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	// no-op
+	n = len(p)
+	return
+}
+
+func (e *FailOnReadConn) Close() error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnReadConn) LocalAddr() net.Addr {
+	return &net.UDPAddr{Port: 69}
+}
+
+func (e *FailOnReadConn) SetDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnReadConn) SetReadDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnReadConn) SetWriteDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func TestBadSocketRead(t *testing.T) {
+
+	conn := FailOnReadConn{}
+	success := func(Packet) bool {
+		return true
+	}
+	requestPacket := PacketAck{BlockNum: 7}
+	resultPacket, err := sendAndWait(&conn, &requestPacket, time.Second, success, &net.UDPAddr{})
+	if resultPacket != nil || err == nil {
+		t.Error("Socket read failure did not result in an error")
+	}
+}
+
+type FailOnWriteConn struct{}
+
+func (e *FailOnWriteConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
+	// no-op
+	n = len(p)
+	addr = &net.UDPAddr{}
+	return
+}
+
+func (e *FailOnWriteConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	err = errors.New("Fake connection failure")
+	return
+}
+
+func (e *FailOnWriteConn) Close() error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnWriteConn) LocalAddr() net.Addr {
+	return &net.UDPAddr{Port: 69}
+}
+
+func (e *FailOnWriteConn) SetDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnWriteConn) SetReadDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func (e *FailOnWriteConn) SetWriteDeadline(t time.Time) error {
+	return errors.New("Not Implemented")
+}
+
+func TestBadSocketWrite(t *testing.T) {
+	conn := FailOnWriteConn{}
+	success := func(Packet) bool {
+		return true
+	}
+	requestPacket := PacketAck{BlockNum: 7}
+	resultPacket, err := sendAndWait(&conn, &requestPacket, time.Second, success, &net.UDPAddr{})
+	if resultPacket != nil || err == nil {
+		t.Error("Socket write failure did not result in an error")
+	}
+}
+
+func TestMalformedRead(t *testing.T) {
+	conn := NewPacketConn()
+	success := func(Packet) bool {
+		return true
+	}
+	requestPacket := PacketAck{BlockNum: 7}
+	control := make(chan bool)
+	go func() {
+		resultPacket, err := sendAndWait(&conn.Server, &requestPacket, time.Second, success, &net.UDPAddr{})
+		if resultPacket != nil || err == nil {
+			t.Error("Socket read malformation did not result in an error")
+		}
+		control <- true
+	}()
+	buf := make([]byte, 517)
+	conn.Client.ReadFrom(buf)
+	conn.Client.WriteTo([]byte{1, 2, 3, 4}, &net.UDPAddr{})
+	// don't exit until the goroutine is done
+	<-control
+
+}
+
+func TestTimeOut(t *testing.T) {
+	conn := NewPacketConn()
+	success := func(Packet) bool {
+		return true
+	}
+	requestPacket := PacketAck{BlockNum: 7}
+	go sendAndWait(&conn.Server, &requestPacket, time.Second, success, &net.UDPAddr{})
+	buf := make([]byte, 517)
+	conn.Client.ReadFrom(buf)
+	time.Sleep(2 * time.Second)
+	buf2 := make([]byte, 517)
+	n, _, _ := conn.Client.ReadFrom(buf2)
+	if n < 1 {
+		t.Error("Failed to resent toSend Packet")
+	}
+
+}
+
 // testTimeOutSocket // hard

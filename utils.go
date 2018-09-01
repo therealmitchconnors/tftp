@@ -71,8 +71,11 @@ func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, succ
 	cerror := make(chan error)
 	cresult := make(chan Packet)
 	for {
-		conn.WriteTo(toSend.Serialize(), dest)
-		// TODO: Error handle here
+		_, err = conn.WriteTo(toSend.Serialize(), dest)
+		if err != nil {
+			// if we fail to write, we should exit, as we can't send an error packet
+			return
+		}
 
 		go func() {
 			var received Packet
@@ -112,6 +115,9 @@ func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, succ
 }
 
 func sendError(conn net.PacketConn, code uint16, message string, dest net.Addr) {
-	p := PacketError{Code: code, Msg: message}
-	conn.WriteTo(p.Serialize(), dest)
+	// sendError should never block
+	go func() {
+		p := PacketError{Code: code, Msg: message}
+		conn.WriteTo(p.Serialize(), dest)
+	}()
 }
