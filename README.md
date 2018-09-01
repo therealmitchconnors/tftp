@@ -1,6 +1,10 @@
 In-memory TFTP Server
 =====================
 
+[![License Apache 2](https://img.shields.io/badge/License-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp?ref=badge_shield)
+[![Go Report Card](https://goreportcard.com/badge/github.com/therealmitchconnors/tftp)](https://goreportcard.com/report/github.com/therealmitchconnors/tftp) [![Build Status](https://travis-ci.org/therealmitchconnors/tftp.svg?branch=master)](http://travis-ci.org/therealmitchconnors/tftp) [![GoDoc](https://godoc.org/github.com/therealmitchconnors/tftp?status.svg)](http://godoc.org/github.com/therealmitchconnors/tftp) [![Coverage Status](https://coveralls.io/repos/therealmitchconnors/tftp/badge.svg?branch=master)](https://coveralls.io/r/therealmitchconnors/tftp?branch=master)
+
 This is a simple in-memory TFTP server, implemented in Go as a proof of concept.  It is RFC1350-compliant, but only supports "octet" mode, and doesn't implement the additions in later RFCs.  In particular, options are not recognized.
 
 Installation
