@@ -25,7 +25,7 @@ type UtilDependencies struct {
 	sendError   func(conn net.PacketConn, code uint16, message string, dest net.Addr)
 }
 
-func handleReq(buf []byte, addr net.UDPAddr) {
+func HandleReq(buf []byte, addr net.UDPAddr) {
 	// These objects just inject the functions for production use
 	productionUtils := UtilDependencies{
 		sendData: func(conn net.PacketConn, data [][]byte, timeout time.Duration, dest net.Addr) {
