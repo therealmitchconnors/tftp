@@ -14,7 +14,14 @@ go get github.com/therealmitchconnors/tftp
 
 Usage
 -----
-TBD
+tftpd [options]
+
+  -max-packet-size value
+        The max transmission unit for UDP reads.  Larger packets will truncate, smaller values are more efficient. (default 2048)
+  -oplog string
+        The destination for operation logs (default "./operations.log")
+  -port value
+        The port tftpd will listen on (default 69)
 
 Testing
 -------
