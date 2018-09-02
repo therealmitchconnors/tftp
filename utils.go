@@ -55,7 +55,7 @@ func sendData(conn net.PacketConn, data [][]byte, timeout time.Duration, dest ne
 func receiveData(conn net.PacketConn, timeout time.Duration, dest net.Addr) [][]byte {
 	var dp *PacketData
 	ack := PacketAck{BlockNum: 0}
-	var payload = make([][]byte, 1)
+	var payload = make([][]byte, 0)
 	// any payload shorter than 512 bytes is a signal for EOF
 	for dp == nil || len(dp.Data) == maxPayload {
 		success := func(p Packet) (result bool) {

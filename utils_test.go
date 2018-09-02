@@ -175,6 +175,13 @@ func TestReceiveData(t *testing.T) {
 	if resultPacket.BlockNum != 2 {
 		t.Error("Third Ack packet corrupt.")
 	}
+
+	resultData := <-received
+	for i := range resultData {
+		if !bytes.Equal(resultData[i], value[i]) {
+			t.Error("Data corruption detected.")
+		}
+	}
 }
 
 type FailOnReadConn struct{}
