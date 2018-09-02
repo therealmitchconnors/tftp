@@ -39,8 +39,10 @@ func HandleReq(buf []byte, addr net.UDPAddr) {
 		},
 	}
 	productionDependencies := ServerDependencies{
-		openRandomSendPort: func() (net.PacketConn, error) {
-			return net.ListenUDP("udp", nil)
+		openRandomSendPort: func() (conn net.PacketConn, err error) {
+			conn, err = net.ListenUDP("udp", nil)
+			conn = &PacketConnLogger{PacketConn: conn}
+			return
 		},
 		sendError: func(conn net.PacketConn, code uint16, message string, dest net.Addr) {
 			productionUtils.sendError(conn, code, message, dest)

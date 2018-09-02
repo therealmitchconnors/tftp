@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/therealmitchconnors/tftp"
@@ -36,12 +36,19 @@ func main() {
 	maxPacketSizeFlag := uInt16Value{uint16(tftp.MaxPacketSize)}
 	flag.Var(&maxPacketSizeFlag, "max-packet-size", "The max transmission unit for UDP reads.  Larger packets will truncate, smaller values are more efficient.")
 
+	opLogFile := flag.String("oplog", "./operations.log", "The destination for operation logs")
+
 	flag.Parse()
 
 	tftp.MaxPacketSize = int(maxPacketSizeFlag.val)
-	fmt.Printf("tftpd is listening on port %d\n", portFlag.val)
+	f, err := os.OpenFile(*opLogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	tftp.OpLogger.SetOutput(f)
+	log.Printf("tftpd is listening on port %d\n", portFlag.val)
 
-	ser, err := net.ListenUDP("udp", &net.UDPAddr{Port: int(portFlag.val)})
+	udpser, err := net.ListenUDP("udp", &net.UDPAddr{Port: int(portFlag.val)})
+
+	// wrap our server in the operations logger
+	ser := &tftp.PacketConnLogger{PacketConn: udpser}
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -310,3 +310,4 @@ func TestTimeOut(t *testing.T) {
 }
 
 // testTimeOutSocket // hard
+// testOpLog // hard-ish
