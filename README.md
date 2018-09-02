@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp?ref=badge_shield)
+
 In-memory TFTP Server
 =====================
 
@@ -39,3 +41,7 @@ Building
 go build github.com/therealmitchconnors/tftp
 
 tftp has no runtime dependencies outside the universe block.  Test does have a dependency on github.com/jordwest/mock-conn, to avoid opening actual UDP ports in a unit test sandbox.  
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp?ref=badge_large)
