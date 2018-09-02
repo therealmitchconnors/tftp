@@ -14,7 +14,14 @@ go get github.com/therealmitchconnors/tftp
 
 Usage
 -----
-TBD
+tftpd [options]
+
+  -max-packet-size value
+        The max transmission unit for UDP reads.  Larger packets will truncate, smaller values are more efficient. (default 2048)
+  -oplog string
+        The destination for operation logs (default "./operations.log")
+  -port value
+        The port tftpd will listen on (default 69)
 
 Testing
 -------
@@ -32,3 +39,7 @@ Building
 go build github.com/therealmitchconnors/tftp
 
 tftp has no runtime dependencies outside the universe block.  Test does have a dependency on github.com/jordwest/mock-conn, to avoid opening actual UDP ports in a unit test sandbox.  
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Ftherealmitchconnors%2Ftftp?ref=badge_large)
