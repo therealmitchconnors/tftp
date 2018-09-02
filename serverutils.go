@@ -65,6 +65,7 @@ func handleReqDep(buf []byte, addr net.UDPAddr, dep ServerDependencies) {
 
 	// negotiate new connection using TID
 	conn, error := dep.openRandomSendPort()
+	defer conn.Close()
 	// conn, error := net.ListenUDP("udp", nil)
 	// I don't love passing the client addr to every funciton,
 	// but it allows us to use only the PacketConn interface
