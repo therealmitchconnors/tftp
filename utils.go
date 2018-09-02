@@ -165,7 +165,7 @@ type PacketConnLogger struct {
 
 func (conn *PacketConnLogger) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 	n, addr, err = conn.PacketConn.ReadFrom(p)
-	logPacket(p, "Read")
+	logPacket(p[:n], "Read")
 	return
 }
 
