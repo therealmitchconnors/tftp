@@ -8,7 +8,11 @@ import (
 // functions in this file are likely to be of value to clients
 // as well as to the server, so they are kept separate.
 
-// the largest payload in one data message is 512 bytes
+// MaxPacketSize is the number of bytes read off the socket.
+// The largest payload in one data message is 516 bytes, but read more to be sure
+var MaxPacketSize = 2048
+
+// the largest data block in one message is 512 bytes
 const maxPayload int = 512
 
 func sendData(conn net.PacketConn, data [][]byte, timeout time.Duration, dest net.Addr) {
@@ -81,7 +85,7 @@ func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, succ
 			var received Packet
 			// until we have success, do this
 			for received == nil || !success(received) {
-				bytes := make([]byte, 517)
+				bytes := make([]byte, maxPayload)
 				n, _, error := conn.ReadFrom(bytes)
 				if error != nil {
 					sendError(conn, 0, error.Error(), dest)
