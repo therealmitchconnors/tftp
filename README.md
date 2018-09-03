@@ -31,7 +31,15 @@ go test -coverprofile=test.out -timeout 30s github.com/therealmitchconnors/tftp
 
 **Functional Tests**
 
-TBD
+Ideally, this will get incorporated into a dockerfile in the future
+1. Install tftp (ie `yum install tftp`)
+2. Build tftpd
+3. Run tftpd
+4. **In another shell** Create test file some.txt
+5. `tftp -m octet -v localhost 69 -c put some.txt`
+6. `mv some.txt expected.txt`
+7. `tftp -m octet -v localhost 69 -c get some.txt`
+8. `cmp some.txt expected.txt`
 
 Building
 --------
