@@ -2,10 +2,13 @@ package tftp
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"strings"
 	"time"
 )
+
+/// this file contains types and functions particular to the tftp server
 
 var store = MapDataStore{mapStore: make(map[string][][]byte)}
 
@@ -19,12 +22,15 @@ type ServerDependencies struct {
 	handleWrite        func(conn net.PacketConn, p PacketRequest, addr net.Addr)
 }
 
+// UtilDependencies allows dependency injection into utils.go
 type UtilDependencies struct {
 	sendData    func(conn net.PacketConn, data [][]byte, timeout time.Duration, dest net.Addr)
 	receiveData func(conn net.PacketConn, timeout time.Duration, dest net.Addr) [][]byte
 	sendError   func(conn net.PacketConn, code uint16, message string, dest net.Addr)
 }
 
+// HandleReq processes a particular TFTP connection from start to finish
+// using production dependencies.
 func HandleReq(buf []byte, addr net.UDPAddr) {
 	// These objects just inject the functions for production use
 	productionUtils := UtilDependencies{
@@ -87,6 +93,7 @@ func handleReqDep(buf []byte, addr net.UDPAddr, dep ServerDependencies) {
 }
 
 func handleRead(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDependencies) {
+	log.Printf("Processing read request from %s for file %s", addr.String(), p.Filename)
 	if !store.keyExists(p.Filename) {
 		dep.sendError(conn, 1, fmt.Sprintf("File %s not found", p.Filename), addr)
 		return
@@ -95,6 +102,7 @@ func handleRead(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDep
 }
 
 func handleWrite(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDependencies) {
+	log.Printf("Processing write request from %s for file %s", addr.String(), p.Filename)
 	timeout := 10 * time.Second
 	payload := dep.receiveData(conn, timeout, addr)
 	if payload != nil {

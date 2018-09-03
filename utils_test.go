@@ -45,23 +45,23 @@ func (end *PacketEnd) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 }
 
 // These functions are not expected to be called
-func (e *PacketEnd) Close() error {
+func (end *PacketEnd) Close() error {
 	return errors.New("Not Implemented")
 }
 
-func (e *PacketEnd) LocalAddr() net.Addr {
+func (end *PacketEnd) LocalAddr() net.Addr {
 	return &net.UDPAddr{Port: 69}
 }
 
-func (e *PacketEnd) SetDeadline(t time.Time) error {
+func (end *PacketEnd) SetDeadline(t time.Time) error {
 	return errors.New("Not Implemented")
 }
 
-func (e *PacketEnd) SetReadDeadline(t time.Time) error {
+func (end *PacketEnd) SetReadDeadline(t time.Time) error {
 	return errors.New("Not Implemented")
 }
 
-func (e *PacketEnd) SetWriteDeadline(t time.Time) error {
+func (end *PacketEnd) SetWriteDeadline(t time.Time) error {
 	return errors.New("Not Implemented")
 }
 

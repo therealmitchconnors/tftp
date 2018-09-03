@@ -8,6 +8,9 @@ type datastore interface {
 	setData(key string, value [][]byte)
 }
 
+// MapDataStore will allow us to move to diverse
+// backends for tftp.  This implementation stores
+// in memory.
 type MapDataStore struct {
 	mapStore map[string][][]byte
 	lock     sync.RWMutex

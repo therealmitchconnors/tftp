@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// functions in this file are likely to be of value to clients
+// functions in this file are designed to be of value to clients
 // as well as to the server, so they are kept separate.
 
 // MaxPacketSize is the number of bytes read off the socket.
@@ -85,6 +85,8 @@ func receiveData(conn net.PacketConn, timeout time.Duration, dest net.Addr) [][]
 	return payload
 }
 
+// SuccessCriteria helps us know when we have received the expected response
+// when sending a packet and waiting for a response
 type SuccessCriteria func(Packet) bool
 
 func sendAndWait(conn net.PacketConn, toSend Packet, timeout time.Duration, success SuccessCriteria, dest net.Addr) (responsePacket Packet, err error) {
@@ -144,6 +146,8 @@ func sendError(conn net.PacketConn, code uint16, message string, dest net.Addr) 
 	}()
 }
 
+// OpLogger logs each request and response to it's own destination,
+// separate from other logs.
 var OpLogger = log.Logger{}
 
 func logPacket(b []byte, op string) {
@@ -174,7 +178,6 @@ func (conn *PacketConnLogger) WriteTo(p []byte, addr net.Addr) (n int, err error
 	return conn.PacketConn.WriteTo(p, addr)
 }
 
-// These functions are not expected to be called
 func (conn *PacketConnLogger) Close() error {
 	return conn.PacketConn.Close()
 }
