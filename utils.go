@@ -3,6 +3,7 @@ package tftp
 import (
 	"log"
 	"net"
+	"os"
 	"time"
 )
 
@@ -148,7 +149,7 @@ func sendError(conn net.PacketConn, code uint16, message string, dest net.Addr) 
 
 // OpLogger logs each request and response to it's own destination,
 // separate from other logs.
-var OpLogger = log.Logger{}
+var OpLogger = log.New(os.Stderr, "OPLOG: ", log.LstdFlags)
 
 func logPacket(b []byte, op string) {
 	p, err := ParsePacket(b)

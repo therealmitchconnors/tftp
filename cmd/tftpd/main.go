@@ -45,10 +45,10 @@ func main() {
 	tftp.OpLogger.SetOutput(f)
 	log.Printf("tftpd is listening on port %d\n", portFlag.val)
 
-	udpser, err := net.ListenUDP("udp", &net.UDPAddr{Port: int(portFlag.val)})
+	ser, err := net.ListenUDP("udp", &net.UDPAddr{Port: int(portFlag.val)})
 
-	// wrap our server in the operations logger
-	ser := &tftp.PacketConnLogger{PacketConn: udpser}
+	// wrap our server in the operations logger for debugging
+	// ser := &tftp.PacketConnLogger{PacketConn: udpser}
 	if err != nil {
 		log.Fatal(err)
 	}

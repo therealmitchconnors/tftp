@@ -47,7 +47,8 @@ func HandleReq(buf []byte, addr net.UDPAddr) {
 	productionDependencies := ServerDependencies{
 		openRandomSendPort: func() (conn net.PacketConn, err error) {
 			conn, err = net.ListenUDP("udp", nil)
-			conn = &PacketConnLogger{PacketConn: conn}
+			// Uncomment to enable detailed debug logs.
+			// conn = &PacketConnLogger{PacketConn: conn}
 			return
 		},
 		sendError: func(conn net.PacketConn, code uint16, message string, dest net.Addr) {
@@ -68,6 +69,10 @@ func handleReqDep(buf []byte, addr net.UDPAddr, dep ServerDependencies) {
 	// TODO: implement recover() here
 	request := PacketRequest{}
 	error := request.Parse(buf)
+	if error != nil {
+		OpLogger.Printf("Received Unrecognized request.")
+		return
+	}
 
 	// negotiate new connection using TID
 	conn, error := dep.openRandomSendPort()
@@ -94,6 +99,7 @@ func handleReqDep(buf []byte, addr net.UDPAddr, dep ServerDependencies) {
 
 func handleRead(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDependencies) {
 	log.Printf("Processing read request from %s for file %s", addr.String(), p.Filename)
+	OpLogger.Printf("Received read request: %+v", p)
 	if !store.keyExists(p.Filename) {
 		dep.sendError(conn, 1, fmt.Sprintf("File %s not found", p.Filename), addr)
 		return
@@ -103,6 +109,7 @@ func handleRead(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDep
 
 func handleWrite(conn net.PacketConn, p PacketRequest, addr net.Addr, dep UtilDependencies) {
 	log.Printf("Processing write request from %s for file %s", addr.String(), p.Filename)
+	OpLogger.Printf("Received write request: %+v", p)
 	timeout := 10 * time.Second
 	payload := dep.receiveData(conn, timeout, addr)
 	if payload != nil {
